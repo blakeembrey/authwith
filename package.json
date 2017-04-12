@@ -49,6 +49,7 @@
   "dependencies": {
     "@types/jsonwebtoken": "^7.2.0",
     "jsonwebtoken": "^7.3.0",
-    "map-pointer": "^1.0.2"
+    "map-pointer": "^1.0.2",
+    "popsicle": "^9.1.0"
   }
 }
