@@ -30,7 +30,7 @@ export interface OAuth2Params {
   clientId: string
   clientSecret: string
   redirectUri: string
-  scope: string
+  scope?: string
   state?: string
 }
 

@@ -25,6 +25,7 @@ export interface OpenIDConnectAuthorization extends OAuth2Authorization {
  * Parameters are similar to "local state" and should be passed to each method.
  */
 export interface OpenIDConnectParams extends OAuth2Params {
+  scope: string
   nonce?: string
   // Specifies the allowable elapsed time in ms.
   maxAge?: number
@@ -71,7 +72,7 @@ export class OpenIDConnect extends OAuth2 {
   }
 
   getRedirectUri (params: OpenIDConnectParams) {
-    if (!/\bopenid\b/.test(params.scope)) {
+    if (!params.scope || !/\bopenid\b/.test(params.scope)) {
       throw new TypeError(`Scope "${params.scope}" must contain "openid"`)
     }
 
