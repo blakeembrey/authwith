@@ -97,13 +97,13 @@ export class OAuth2 {
     return request({
       url: this.provider.accessTokenUri,
       method: 'POST',
-      headers: DEFAULT_HEADERS,
+      headers: Object.assign({
+        Authorization: `Basic ${new Buffer(`${params.clientId}:${params.clientSecret}`).toString('base64')}`
+      }, DEFAULT_HEADERS),
       body: stringifyQuery({
         code: query.code,
         grant_type: 'authorization_code',
-        redirect_uri: params.redirectUri,
-        client_id: params.clientId,
-        client_secret: params.clientSecret
+        redirect_uri: params.redirectUri
       })
     })
       .then((res) => {
@@ -130,10 +130,9 @@ export class OAuth2 {
     return request({
       url: this.provider.profileUri,
       method: 'GET',
-      headers: {
-        Authorization: `Bearer ${token.access_token}`,
-        ...DEFAULT_HEADERS
-      }
+      headers: Object.assign({
+        Authorization: `Bearer ${token.access_token}`
+      }, DEFAULT_HEADERS)
     })
       .then((res) => {
         if (res.status !== 200) {
