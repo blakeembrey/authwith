@@ -95,7 +95,12 @@ export class OpenIDConnect extends OAuth2 {
 
   // Based on https://github.com/jaredhanson/passport-openidconnect/blob/ac1c0257f02353f818be33c0602cca5883d97235/lib/strategy.js.
   getProfile (token: OpenIDConnectAuthorization, params: OpenIDConnectParams) {
-    const jwtClaims = jsonwebtoken.decode(token.id_token)
+    const jwtClaims = jsonwebtoken.decode(token.id_token) as any
+
+    if (!jwtClaims || typeof jwtClaims !== 'object') {
+      return Promise.reject<Profile>(new AuthError('oidc', 'JWT payload is invalid'))
+    }
+
     const missing = ['iss', 'sub', 'aud', 'exp', 'iat'].filter((param) => !jwtClaims[param])
 
     if (missing.length) {
