@@ -73,3 +73,10 @@ export interface ResponseOptions {
 export function request (options: RequestOptions): Promise<ResponseOptions> {
   return Promise.resolve(popsicle.request(options))
 }
+
+/**
+ * Append the query to an existing URL.
+ */
+export function appendQuery (url: string, query: string) {
+  return url + (url.indexOf('?') > -1 ? '&' : '?') + query
+}

@@ -1,7 +1,7 @@
 import jsonwebtoken = require('jsonwebtoken')
 import { map } from 'map-pointer'
 import { stringify as stringifyQuery } from 'querystring'
-import { AuthError, ProfileMap, Profile } from './support'
+import { AuthError, ProfileMap, Profile, appendQuery } from './support'
 import { OAuth2, OAuth2Provider, OAuth2Authorization, OAuth2Params } from './oauth2'
 
 /**
@@ -76,7 +76,7 @@ export class OpenIDConnect extends OAuth2 {
       throw new TypeError(`Scope "${params.scope}" must contain "openid"`)
     }
 
-    const query = {
+    const query = stringifyQuery({
       client_id: params.clientId,
       redirect_uri: params.redirectUri,
       scope: params.scope || 'openid',
@@ -84,9 +84,9 @@ export class OpenIDConnect extends OAuth2 {
       state: params.state,
       nonce: params.nonce,
       max_age: typeof params.maxAge === 'number' ? ~~(params.maxAge / 1000) : undefined
-    }
+    })
 
-    return `${this.provider.authorizationUri}?${stringifyQuery(query)}`
+    return appendQuery(this.provider.authorizationUri, query)
   }
 
   getToken (callbackUri: string, params: OpenIDConnectParams): Promise<OpenIDConnectAuthorization> {

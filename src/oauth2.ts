@@ -1,7 +1,7 @@
 import { map } from 'map-pointer'
 import { parse as parseUrl } from 'url'
 import { stringify as stringifyQuery, parse as parseQuery } from 'querystring'
-import { AuthError, ProfileMap, Profile, request } from './support'
+import { AuthError, ProfileMap, Profile, request, appendQuery } from './support'
 
 /**
  * Required configuration for OAuth 2.0 providers.
@@ -67,15 +67,15 @@ export class OAuth2 {
   constructor (public provider: OAuth2Provider) {}
 
   getRedirectUri (params: OAuth2Params) {
-    const query = {
+    const query = stringifyQuery({
       client_id: params.clientId,
       redirect_uri: params.redirectUri,
       scope: params.scope,
       response_type: 'code',
       state: params.state
-    }
+    })
 
-    return `${this.provider.authorizationUri}?${stringifyQuery(query)}`
+    return appendQuery(this.provider.authorizationUri, query)
   }
 
   getToken (callbackUri: string, params: OAuth2Params): Promise<OAuth2Authorization> {
