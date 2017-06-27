@@ -47,8 +47,9 @@ These are passed as the final option to each method:
 
 1. Redirect user to the URL returned from the `auth.getRedirectUri(params)` method
   - **P.S.** Save the state into the users session for verification on redirect
-2. When the callback (redirect) URL is invoked, call `auth.getToken(uri, params)` - this will make a request for the access token
+2. When the callback (redirect) URL is invoked, call `auth.getToken(uri, params)` - this will make a request and return the access token
 3. With the access token from the response, call `auth.getProfile(token, params)` - this will retrieve the users profile information
+4. Refresh the token later with `auth.refreshToken(refreshToken, params)`
 
 ### Open ID Connect
 
@@ -73,9 +74,7 @@ Extends `OAuth2` parameters:
 
 #### Flow
 
-1. Redirect user to the URL returned from `auth.getRedirectUri(params)` (remembering to store `state` when specified to verify later)
-2. When the callback (redirect) URL is invoked, call `auth.getToken(uri, params)` - this will make a request for the access token
-3. With the access token from the response, call `auth.getProfile(token, params)` - this will retrieve the users profile information
+OpenID Connect is identical to OAuth 2.0. Internally, it will use the `id_token` instead of making a separate request for profile information.
 
 ## TypeScript
 
