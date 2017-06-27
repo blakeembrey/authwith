@@ -1,7 +1,9 @@
 import { map } from 'map-pointer'
 import { parse as parseUrl } from 'url'
 import { stringify as stringifyQuery, parse as parseQuery } from 'querystring'
-import { AuthError, ProfileMap, Profile, request, appendQuery } from './support'
+import { AuthError, ProfileMap, Profile } from './common'
+import { request, appendQuery } from './support/util'
+import { base64 } from './support/base64'
 
 /**
  * Required configuration for OAuth 2.0 providers.
@@ -78,33 +80,14 @@ export class OAuth2 {
     return appendQuery(this.provider.authorizationUri, query)
   }
 
-  getToken (callbackUri: string, params: OAuth2Params): Promise<OAuth2Authorization> {
-    const { query } = parseUrl(callbackUri, true)
-    const err = getAuthError(query)
-
-    if (err) {
-      return Promise.reject(err)
-    }
-
-    if (params.state && query.state !== params.state) {
-      return Promise.reject(new AuthError('oauth2', 'OAuth 2.0 state mismatch'))
-    }
-
-    if (!query.code) {
-      return Promise.reject(new AuthError('oauth2', 'Missing OAuth 2.0 code'))
-    }
-
+  _getToken (body: { [key: string]: string }, params: OAuth2Params): Promise<OAuth2Authorization> {
     return request({
       url: this.provider.accessTokenUri,
       method: 'POST',
       headers: Object.assign({
-        Authorization: `Basic ${new Buffer(`${params.clientId}:${params.clientSecret}`).toString('base64')}`
+        Authorization: `Basic ${base64(`${params.clientId}:${params.clientSecret}`)}`
       }, DEFAULT_HEADERS),
-      body: stringifyQuery({
-        code: query.code,
-        grant_type: 'authorization_code',
-        redirect_uri: params.redirectUri
-      })
+      body: stringifyQuery(body)
     })
       .then((res) => {
         const body = parseResponseBody(res.body)
@@ -124,6 +107,36 @@ export class OAuth2 {
 
         return body
       })
+  }
+
+  getToken (callbackUri: string, params: OAuth2Params): Promise<OAuth2Authorization> {
+    const { query } = parseUrl(callbackUri, true)
+    const err = getAuthError(query)
+
+    if (err) {
+      return Promise.reject(err)
+    }
+
+    if (params.state && query.state !== params.state) {
+      return Promise.reject(new AuthError('oauth2', 'OAuth 2.0 state mismatch'))
+    }
+
+    if (!query.code) {
+      return Promise.reject(new AuthError('oauth2', 'Missing OAuth 2.0 code'))
+    }
+
+    return this._getToken({
+      code: query.code,
+      grant_type: 'authorization_code',
+      redirect_uri: params.redirectUri
+    }, params)
+  }
+
+  refreshToken (refreshToken: string, params: OAuth2Params): Promise<OAuth2Authorization> {
+    return this._getToken({
+      refresh_token: refreshToken,
+      grant_type: 'refresh_token'
+    }, params)
   }
 
   getProfile (token: OAuth2Authorization, _params: OAuth2Params) {

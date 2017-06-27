@@ -1,8 +1,9 @@
 import jsonwebtoken = require('jsonwebtoken')
 import { map } from 'map-pointer'
 import { stringify as stringifyQuery } from 'querystring'
-import { AuthError, ProfileMap, Profile, appendQuery } from './support'
 import { OAuth2, OAuth2Provider, OAuth2Authorization, OAuth2Params } from './oauth2'
+import { AuthError, ProfileMap, Profile } from './common'
+import { appendQuery } from './support/util'
 
 /**
  * Provider configuration.
