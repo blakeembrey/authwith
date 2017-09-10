@@ -25,7 +25,8 @@ export interface ResponseOptions {
  * Default request function.
  */
 export function request (options: RequestOptions): Promise<ResponseOptions> {
-  return Promise.resolve(popsicle.request(options))
+  return popsicle.request(options)
+    .then(({ url, status, body }) => ({ url, status, body }))
 }
 
 /**

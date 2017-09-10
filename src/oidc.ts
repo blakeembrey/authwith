@@ -90,8 +90,14 @@ export class OpenIDConnect extends OAuth2 {
     return appendQuery(this.provider.authorizationUri, query)
   }
 
-  getToken (callbackUri: string, params: OpenIDConnectParams): Promise<OpenIDConnectAuthorization> {
-    return super.getToken(callbackUri, params)
+  async getToken (callbackUri: string, params: OpenIDConnectParams) {
+    const token = await super.getToken(callbackUri, params) as OpenIDConnectAuthorization
+
+    if (!token.id_token) {
+      return Promise.reject(new AuthError('oidc', 'Missing id token'))
+    }
+
+    return token
   }
 
   // Based on https://github.com/jaredhanson/passport-openidconnect/blob/ac1c0257f02353f818be33c0602cca5883d97235/lib/strategy.js.
