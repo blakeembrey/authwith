@@ -11,7 +11,7 @@
     "./dist/support/base64/index.js": "./dist/support/base64/browser.js"
   },
   "scripts": {
-    "lint": "tslint \"src/**/*.ts\" --type-check --project tsconfig.json",
+    "lint": "tslint \"src/**/*.ts\" --project tsconfig.json",
     "build": "rm -rf dist/ && tsc",
     "specs": "jest --coverage",
     "dep-check": "dependency-check . --missing --unused --no-dev -i @types/jsonwebtoken",
@@ -41,21 +41,21 @@
   },
   "homepage": "https://github.com/blakeembrey/authwith",
   "devDependencies": {
-    "@types/jest": "^21.1.0",
-    "@types/node": "^8.0.0",
-    "dependency-check": "^2.8.0",
-    "jest": "^21.0.2",
+    "@types/jest": "^22.2.3",
+    "@types/node": "^10.1.2",
+    "dependency-check": "^3.1.0",
+    "jest": "^22.4.4",
     "rimraf": "^2.5.4",
-    "tslint": "^5.1.0",
-    "tslint-config-standard": "^6.0.0",
-    "typescript": "^2.2.1",
+    "tslint": "^5.10.0",
+    "tslint-config-standard": "^7.0.0",
+    "typescript": "^2.8.3",
     "typings": "^2.1.0"
   },
   "dependencies": {
     "@types/jsonwebtoken": "^7.2.1",
     "jsonwebtoken": "^8.0.0",
     "make-error": "^1.2.3",
-    "map-pointer": "^1.0.2",
-    "popsicle": "^9.1.0"
+    "servie": "^3.1.0",
+    "universal-base64": "^1.0.0"
   }
 }

@@ -15,23 +15,24 @@ npm install authwith --save
 
 ## Usage
 
-Available classes (implementations):
+Available implementations:
 
 * `OAuth2`
 * `OpenIDConnect`
+
+**Note:** `request (req: Request) => Promise<Response>` must be provided for each implementation to support external requests (uses [Servie](https://github.com/serviejs/servie) interfaces).
 
 ### OAuth 2.0
 
 ```js
 import { OAuth2 } from 'authwith'
 
-const auth = new OAuth2(options)
+const auth = new OAuth2(options, request)
 ```
 
 * `authorizationUri` The URL to redirect the user for authorization
 * `accessTokenUri` The URL to retrieve the access token
 * `profileUri` The URL to request user information
-* `profileMap` A schema using [`map-pointer`](https://github.com/blakeembrey/map-pointer) from profile response into standard profile info
 
 #### Parameters
 
@@ -56,13 +57,12 @@ These are passed as the final option to each method:
 ```js
 import { OpenIDConnect } from 'authwith'
 
-const auth = new OpenIDConnect(options)
+const auth = new OpenIDConnect(options, request)
 ```
 
 * `authorizationUri` The URL to redirect the user for authorization
 * `accessTokenUri` The URL to retrieve the access token
 * `issuer` The issuer string for the ID token
-* `profileMap?` The same schema as OAuth 2.0 - uses the OIDC default map when not specified
 
 #### Parameters
 
@@ -74,7 +74,7 @@ Extends `OAuth2` parameters:
 
 #### Flow
 
-OpenID Connect is identical to OAuth 2.0. Internally, it will use the `id_token` instead of making a separate request for profile information.
+OpenID Connect is built on top of OAuth 2.0. Internally, it will use the `id_token` instead of making a separate request for profile information.
 
 ## TypeScript
 

@@ -1,38 +1,15 @@
 import { BaseError } from 'make-error'
+import { Request, Response } from 'servie'
 
 /**
- * Shape of a user profile object.
+ * Shape of the request flow.
  */
-export interface Profile {
-  sub: string
-  name?: string
-  givenName?: string
-  middleName?: string
-  familyName?: string
-  nickname?: string
-  preferredUsername?: string
-  profile?: string
-  picture?: string
-  website?: string
-  gender?: string
-  birthdate?: string
-  zoneinfo?: string
-  locale?: string
-  updatedAt?: number
-  email?: string
-  emailVerified?: boolean
-  phoneNumber?: string
-  phoneNumberVerified?: boolean
-}
+export type MakeRequest = (req: Request) => Promise<Response>
 
 /**
- * Mapper for profile information (JSON-pointer map).
+ * Supported `authwith` methods.
  */
-export type ProfileMap = {
-  [K in keyof Profile]: string
-}
-
-export type Type = 'oauth2' | 'oauth1' | 'oidc'
+export type Type = 'oauth2' | 'oidc'
 
 /**
  * Authentication error class used by the project.
@@ -43,4 +20,11 @@ export class AuthError extends BaseError {
     super(message)
   }
 
+}
+
+/**
+ * Append the query to an existing URL.
+ */
+export function withQuery (url: string, query: string) {
+  return url + (url.indexOf('?') > -1 ? '&' : '?') + query
 }

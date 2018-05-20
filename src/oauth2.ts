@@ -1,9 +1,9 @@
-import { map } from 'map-pointer'
 import { parse as parseUrl } from 'url'
 import { stringify as stringifyQuery, parse as parseQuery } from 'querystring'
-import { AuthError, ProfileMap, Profile } from './common'
-import { request, appendQuery } from './support/util'
-import { base64 } from './support/base64'
+import { btoa } from 'universal-base64'
+import { Request, createHeaders } from 'servie'
+import { createBody } from 'servie/dist/body/universal'
+import { AuthError, withQuery, MakeRequest } from './common'
 
 /**
  * Required configuration for OAuth 2.0 providers.
@@ -12,7 +12,6 @@ export interface OAuth2Provider {
   accessTokenUri: string
   authorizationUri: string
   profileUri: string
-  profileMap: ProfileMap
 }
 
 /**
@@ -39,7 +38,7 @@ export interface OAuth2Params {
 /**
  * Default OAuth 2.0 headers.
  */
-export const DEFAULT_HEADERS = {
+export const PAYLOAD_HEADERS = {
   'Accept': 'application/json, application/x-www-form-urlencoded',
   'Content-Type': 'application/x-www-form-urlencoded'
 }
@@ -66,7 +65,7 @@ export function getAuthError (body: any): AuthError | void {
 
 export class OAuth2 {
 
-  constructor (public provider: OAuth2Provider) {}
+  constructor (public provider: OAuth2Provider, public request: MakeRequest) {}
 
   getRedirectUri (params: OAuth2Params) {
     const query = stringifyQuery({
@@ -77,45 +76,40 @@ export class OAuth2 {
       state: params.state
     })
 
-    return appendQuery(this.provider.authorizationUri, query)
+    return withQuery(this.provider.authorizationUri, query)
   }
 
-  _getToken (body: { [key: string]: string }, params: OAuth2Params): Promise<OAuth2Authorization> {
-    return request({
+  async _getToken (payload: { [key: string]: string }, params: OAuth2Params): Promise<OAuth2Authorization> {
+    const res = await this.request(new Request({
       url: this.provider.accessTokenUri,
       method: 'POST',
-      headers: Object.assign({
-        Authorization: `Basic ${base64(`${params.clientId}:${params.clientSecret}`)}`
-      }, DEFAULT_HEADERS),
-      body: stringifyQuery(body)
-    })
-      .then((res) => {
-        const body = parseResponseBody(res.body)
-        const err = getAuthError(body)
+      headers: createHeaders({
+        Authorization: `Basic ${btoa(`${params.clientId}:${params.clientSecret}`)}`
+      }),
+      body: createBody(stringifyQuery(payload), { headers: PAYLOAD_HEADERS })
+    }))
 
-        if (err) {
-          return Promise.reject(err)
-        }
+    const body = parseResponseBody(await res.body.text())
+    const err = getAuthError(body)
 
-        if (res.status !== 200) {
-          return Promise.reject(new AuthError('oauth2', `Invalid response status: ${res.status}`))
-        }
+    if (err) return Promise.reject(err)
 
-        if (!body.access_token) {
-          return Promise.reject(new AuthError('oauth2', 'Unable to retrieve access token from response'))
-        }
+    if (res.statusCode !== 200) {
+      return Promise.reject(new AuthError('oauth2', `Invalid response status: ${res.statusCode}`))
+    }
 
-        return body
-      })
+    if (!body.access_token) {
+      return Promise.reject(new AuthError('oauth2', 'Unable to retrieve access token from response'))
+    }
+
+    return body
   }
 
   getToken (callbackUri: string, params: OAuth2Params): Promise<OAuth2Authorization> {
     const { query } = parseUrl(callbackUri, true)
     const err = getAuthError(query)
 
-    if (err) {
-      return Promise.reject(err)
-    }
+    if (err) return Promise.reject(err)
 
     if (params.state && query.state !== params.state) {
       return Promise.reject(new AuthError('oauth2', 'OAuth 2.0 state mismatch'))
@@ -126,7 +120,7 @@ export class OAuth2 {
     }
 
     return this._getToken({
-      code: query.code,
+      code: String(query.code),
       grant_type: 'authorization_code',
       redirect_uri: params.redirectUri
     }, params)
@@ -139,28 +133,21 @@ export class OAuth2 {
     }, params)
   }
 
-  getProfile (token: OAuth2Authorization, _params: OAuth2Params) {
-    return request({
+  async getProfile (token: OAuth2Authorization, _params: OAuth2Params) {
+    const res = await this.request(new Request({
       url: this.provider.profileUri,
       method: 'GET',
-      headers: Object.assign({
+      headers: createHeaders({
         Authorization: `Bearer ${token.access_token}`
-      }, DEFAULT_HEADERS)
-    })
-      .then((res) => {
-        if (res.status !== 200) {
-          return Promise.reject<Profile>(new AuthError('oauth2', `Invalid response status: ${res.status}`))
-        }
+      }),
+      body: createBody(undefined, { headers: PAYLOAD_HEADERS })
+    }))
 
-        const body = parseResponseBody(res.body)
-        const profile = map<Profile>(this.provider.profileMap, body)
+    if (res.statusCode !== 200) {
+      throw new AuthError('oauth2', `Invalid response status: ${res.statusCode}`)
+    }
 
-        if (!profile.sub) {
-          return Promise.reject<Profile>(new AuthError('oauth2', 'No profile sub'))
-        }
-
-        return profile
-      })
+    return parseResponseBody(await res.body.text())
   }
 
 }
