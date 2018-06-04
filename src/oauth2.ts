@@ -79,14 +79,14 @@ export class OAuth2 {
     return withQuery(this.provider.authorizationUri, query)
   }
 
-  async _getToken (payload: { [key: string]: string }, params: OAuth2Params): Promise<OAuth2Authorization> {
+  async getAuthorization (payload: { [key: string]: string }, params: OAuth2Params): Promise<OAuth2Authorization> {
     const res = await this.request(new Request({
       url: this.provider.accessTokenUri,
       method: 'POST',
-      headers: createHeaders({
+      headers: createHeaders(Object.assign({
         Authorization: `Basic ${btoa(`${params.clientId}:${params.clientSecret}`)}`
-      }),
-      body: createBody(stringifyQuery(payload), { headers: PAYLOAD_HEADERS })
+      }, PAYLOAD_HEADERS)),
+      body: createBody(stringifyQuery(payload))
     }))
 
     const body = parseResponseBody(await res.body.text())
@@ -119,7 +119,7 @@ export class OAuth2 {
       return Promise.reject(new AuthError('oauth2', 'Missing OAuth 2.0 code'))
     }
 
-    return this._getToken({
+    return this.getAuthorization({
       code: String(query.code),
       grant_type: 'authorization_code',
       redirect_uri: params.redirectUri
@@ -127,7 +127,7 @@ export class OAuth2 {
   }
 
   refreshToken (refreshToken: string, params: OAuth2Params): Promise<OAuth2Authorization> {
-    return this._getToken({
+    return this.getAuthorization({
       refresh_token: refreshToken,
       grant_type: 'refresh_token'
     }, params)
@@ -137,10 +137,9 @@ export class OAuth2 {
     const res = await this.request(new Request({
       url: this.provider.profileUri,
       method: 'GET',
-      headers: createHeaders({
+      headers: createHeaders(Object.assign({
         Authorization: `Bearer ${token.access_token}`
-      }),
-      body: createBody(undefined, { headers: PAYLOAD_HEADERS })
+      }, PAYLOAD_HEADERS))
     }))
 
     if (res.statusCode !== 200) {
